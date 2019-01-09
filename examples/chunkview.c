@@ -24,6 +24,9 @@
  * either License.
  */
 
+/* MODIFICATIONS TO SOURCE
+modified how depth_cb() outputs (from chuncky to greyscale)
+*/
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -258,12 +261,18 @@ uint16_t t_gamma[2048];
 
 void depth_cb(freenect_device *dev, void *v_depth, uint32_t timestamp)
 {
+	//
+	//char op[320*240]="";
+	int op[320*240];
+	//
 	int i;
 	uint16_t *depth = (uint16_t*)v_depth;
 	pthread_mutex_lock(&gl_backbuf_mutex);
 	for (i=0; i<320*240; i++) {
 		int pval = t_gamma[depth[i]];
 		int lb = pval & 0xff;
+		depth[i]=lb; //may or may not work
+		/*
 		switch (pval>>8) {
 			case 0:
 				depth_mid[3*i+0] = 255;
@@ -301,7 +310,18 @@ void depth_cb(freenect_device *dev, void *v_depth, uint32_t timestamp)
 				depth_mid[3*i+2] = 0;
 				break;
 		}
+		*/
+		depth_mid[3*i+0]=lb;
+		depth_mid[3*i+1]=lb;
+		depth_mid[3*i+2]=lb;
+
+		op[i]=lb;
 	}
+	//
+	//printf("START:%d",op);
+	//printf("quiting");
+	//exit(1);
+	//
 	got_depth++;
 	pthread_cond_signal(&gl_frame_cond);
 	pthread_mutex_unlock(&gl_backbuf_mutex);
